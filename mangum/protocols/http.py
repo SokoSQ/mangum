@@ -56,7 +56,7 @@ class HTTPCycle:
     async def run(self, app: ASGI) -> None:
         try:
             await app(self.scope, self.receive, self.send)
-        except BaseException:
+        except BaseException as exc:
             self.logger.exception("An error occurred running the application.")
             if self.state is HTTPCycleState.REQUEST:
                 await self.send(
@@ -77,6 +77,7 @@ class HTTPCycle:
                 self.status = 500
                 self.body = b"Internal Server Error"
                 self.headers = [[b"content-type", b"text/plain; charset=utf-8"]]
+            raise exc from None
 
     async def receive(self) -> Message:
         return await self.app_queue.get()  # pragma: no cover
